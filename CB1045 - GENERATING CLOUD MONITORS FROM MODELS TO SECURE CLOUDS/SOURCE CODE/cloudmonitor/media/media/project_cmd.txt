@@ -1,0 +1,2 @@
+C:\Users\SRIKANTH\OneDrive\Desktop\SOURCE CODE\cloudmonitor>python manage.py runserver
+

@@ -1,0 +1,234 @@
+1. 
+rows = int(input("Enter the rows: "))
+cols = int(input("Enter the columns: "))
+mat = []
+for i in range(rows):
+    templist = []
+    print(f"Enter elements for row {i+1}:")
+    for j in range(cols):
+        tempnum = int(input())
+        templist.append(tempnum)
+    mat.append(templist)
+def print_spiral(matrix):
+  dir = 0
+  for i in range(rows):
+    if dir == 0:
+      for j in range(cols):
+        print(mat[i][j], end="\n")
+        dir = 1
+    else:
+      for j in range(cols-1, -1, -1):
+        print(mat[i][j], end="\n")
+        dir = 0
+print("Spiral Order:")
+print_spiral(mat)
+
+2.
+def distribute_values(s):
+    parts = s.split(',')
+    parts = [part.strip() for part in parts]
+    
+    values = []
+    for part in parts:
+        if part.isdigit():
+            values.append(int(part))
+        else:
+            values.append(None)
+    
+    n = len(values)
+    
+    i = 0
+    while i < n:
+        if values[i] is None:
+            j = i
+            while j < n and values[j] is None:
+                j += 1
+            
+            if i == 0 and j < n:
+                num_to_distribute = values[j]
+                count = j - i + 1
+                distributed_value = num_to_distribute / count
+                for k in range(i, j + 1):
+                    values[k] = int(distributed_value)
+            
+            elif i > 0 and j == n:
+                num_to_distribute = values[i - 1]
+                count = j - i + 1
+                distributed_value = num_to_distribute / count
+                for k in range(i, j):
+                    values[k] = int(distributed_value)
+                values[i - 1] -= int(distributed_value) * (count - 1)
+            
+            elif i > 0 and j < n:
+                num_to_distribute = values[i - 1] + values[j]
+                count = j - i + 2
+                distributed_value = num_to_distribute / count
+                for k in range(i - 1, j + 1):
+                    values[k] = int(distributed_value)
+            
+            i = j
+        else:
+            i += 1
+    
+    result = ', '.join(str(value) for value in values)
+    return result
+
+if __name__ == "__main__":
+    input_string = input("Enter the string: ")
+    output = distribute_values(input_string)
+    print(output)
+
+3.
+import requests
+import pandas as pd
+from datetime import datetime, timezone
+import pyodbc
+import matplotlib.pyplot as plt
+
+def get_weather(api, cities_list):
+    data = []
+    for city in cities_list:
+        response = requests.get(f'https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api}').json()
+        data.append({
+            'City': city,
+            'Timestamp': datetime.utcfromtimestamp(response['dt']).strftime('%Y-%m-%d %H:%M:%S'),
+            'TempCelsius': response['main']['temp'] - 273.15
+        })
+    return pd.DataFrame(data)
+
+def setup_and_insert(conn, weather_df):
+    with pyodbc.connect(conn) as connection:
+        cursor = connection.cursor()
+        cursor.execute('''
+            IF OBJECT_ID('WeatherTable', 'U') IS NULL 
+            CREATE TABLE WeatherTable (
+                ID INT IDENTITY(1,1) PRIMARY KEY,
+                City NVARCHAR(100) NOT NULL,
+                Timestamp DATETIME NOT NULL,
+                TempCelsius FLOAT NOT NULL,
+                UNIQUE (City, Timestamp)
+            );
+        ''')
+        cursor.execute('DELETE FROM WeatherTable')
+        for _, row in weather_df.iterrows():
+            cursor.execute('INSERT INTO WeatherTable (City, Timestamp, TempCelsius) VALUES (?, ?, ?)', row['City'], row['Timestamp'], row['TempCelsius'])
+        connection.commit()
+
+def plot_weather(conn_str):
+    with pyodbc.connect(conn_str) as conn:
+        df = pd.read_sql('SELECT City, TempCelsius FROM WeatherTable', conn)
+        plt.plot(df['City'], df['TempCelsius'], marker='o')
+        plt.xlabel('City')
+        plt.ylabel('Temperature (°C)')
+        plt.title('City Temperature')
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+
+def main():
+    api_key = '7fcf5d109e4b91239feee8047ef94862'
+    cities = ['Hyderabad', 'Mysuru', 'Kochi', 'Mumbai', 'Chennai']
+    
+    weather_data = get_weather(api_key, cities)
+    print(weather_data)
+
+    driver = pyodbc.drivers()[0]
+    server = 'LAPTOP-5J19E28G'
+    database = 'Test1'
+    conn_str = f'DRIVER={driver};SERVER={server};DATABASE={database};Trusted_Connection=yes'
+
+    setup_and_insert(conn_str, weather_data)
+    
+    plot_weather(conn_str)
+
+if __name__ == "__main__":
+    main()
+
+4.
+import re
+
+test = int(input())
+
+for _ in range(test):
+    str1 = input()
+    l = len(str1)
+    no_repeats = len(set(str1)) == l
+    
+    if l == 10 and no_repeats:
+        has_two_uppercase = len(re.findall(r'[A-Z]', str1)) >= 2
+        has_three_digits = len(re.findall(r'[0-9]', str1)) >= 3
+        is_alphanumeric = re.match(r'^[a-zA-Z0-9]+$', str1) is not None
+        
+        if has_two_uppercase and has_three_digits and is_alphanumeric:
+            print("Valid")
+        else:
+            print("Invalid")
+    else:
+        print("Invalid")
+
+
+5.
+a.
+import collections as coll
+import itertools as it
+
+test = int(input())
+
+words = []
+
+for _ in range(test):
+    word = input().strip()
+    words.append(word)
+
+word_count = coll.Counter(words)
+
+print(len(word_count))
+
+occurrences = [word_count[word] for word in coll.OrderedDict.fromkeys(words)]
+print(' '.join(map(str, occurrences)))
+
+b.
+from itertools import permutations
+def get_unique_permutations(string):
+  list1=list(permutations(string))
+  list2=[]
+  for i in list1:
+    str2="".join(i)
+    if str2 not in list2:
+      list2.append(str2)
+  return list2
+string = input("Enter a string: ")
+unique_permutations = get_unique_permutations(string)
+print("Unique Permutations:",unique_permutations)
+
+6.
+import requests
+from bs4 import BeautifulSoup
+import re
+
+def extract_domain(url):
+    pattern = r'https://(www\.)?([a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+)'
+    match = re.search(pattern, url)
+    if match:
+        return match.group(2)
+
+webpages = [
+    "https://www.youtube.com/",
+    "https://www.facebook.com/",
+    "https://www.netflix.com/"
+]
+
+domain_names = set()
+
+for webpage in webpages:
+    response = requests.get(webpage)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'html.parser')
+        anchor_tags = soup.find_all('a', href=True)
+        for tag in anchor_tags:
+            href = tag['href']
+            if href.startswith('https') and any(webpage in href for webpage in webpages):
+                domain = extract_domain(href)
+                if domain:
+                    domain_names.add(domain)
+print(list(domain_names))

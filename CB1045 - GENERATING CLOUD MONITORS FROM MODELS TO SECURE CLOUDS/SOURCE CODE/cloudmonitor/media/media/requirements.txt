@@ -1,0 +1,5 @@
+Python 3.8
+=================
+pip3 install djangorestframework
+pip install django-cors-headers
+updated from app
